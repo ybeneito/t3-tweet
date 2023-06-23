@@ -1,4 +1,4 @@
-import { exampleRouter } from "y/server/api/routers/example";
+import { tweetRouter } from "y/server/api/routers/tweet";
 import { createTRPCRouter } from "y/server/api/trpc";
 
 /**
@@ -7,7 +7,7 @@ import { createTRPCRouter } from "y/server/api/trpc";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  example: exampleRouter,
+  tweet: tweetRouter,
 });
 
 // export type definition of API
