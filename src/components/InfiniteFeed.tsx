@@ -4,6 +4,7 @@ import { ProfileImg } from "./ProfileImg";
 import { useSession } from "next-auth/react";
 import {VscHeart, VscHeartFilled} from "react-icons/vsc"
 import { IconHoverEffect } from "./IconHoverEffect";
+import { api } from "y/utils/api";
 
 type Tweet = {
     id: string;
@@ -23,13 +24,15 @@ type InfiniteFeedProps = {
 }
 
 type HeartBtnProps = {
+    isLoading: boolean
+    onClick: () => void
     likedByMe: boolean
     likeCount: number
 }
 
 const dateTimeFormatter = new Intl.DateTimeFormat(undefined, {dateStyle: "short"})
 
-const HeartBtn = ({likedByMe, likeCount} : HeartBtnProps) => {
+const HeartBtn = ({isLoading, onClick, likedByMe, likeCount} : HeartBtnProps) => {
     const session = useSession()
     const HeartIcon = likedByMe ? VscHeartFilled : VscHeart
     if (session.status !== "authenticated") {
@@ -44,7 +47,7 @@ const HeartBtn = ({likedByMe, likeCount} : HeartBtnProps) => {
         <button className={`group items-center gap-1 self-start flex transition-colors duration-200 ${likedByMe 
                 ? "text-red-500" 
                 : "text-gray-500 hover:text-red-500 focus-visible:text-red-500"}
-            `}>
+            `} disabled={isLoading} onClick={onClick}>
             <IconHoverEffect red>
                 <HeartIcon  className={`transition-colors duration-200 ${likedByMe 
                         ? "fill-red-500"
@@ -57,6 +60,38 @@ const HeartBtn = ({likedByMe, likeCount} : HeartBtnProps) => {
 }
 
 const TweetCard = ({id, user, content, createdAt, likeCount, likedByMe} : Tweet) => {
+    const trpcUtils = api.useContext()
+    const toggleLikes = api.tweet.toggleLike.useMutation({
+        onSuccess: ({ addedLike }) => {
+            const updateData: Parameters<typeof trpcUtils.tweet.infiniteFeed.setInfiniteData>[1] = (oldData) => {
+                if (oldData == null) return
+                const countModifier = addedLike ? 1 : -1
+                return {
+                    ...oldData,
+                    pages: oldData.pages.map(page => {
+                        return {
+                            ...page,
+                            tweets: page.tweets.map(tweet => {
+                                if(tweet.id === id)  {
+                                    return {
+                                        ...tweet,
+                                        likeCount: tweet.likeCount + countModifier,
+                                        likedByMe: addedLike
+                                    }
+                                }
+                                return tweet
+                            })
+                        }
+                    })
+                }
+            }
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+            trpcUtils.tweet.infiniteFeed.setInfiniteData({}, updateData)
+        }
+    })
+    const handleToggleLike = () => {
+        toggleLikes.mutate({id})
+    }
     return (
         <li className="flex gap-4 border-b px-4 py-4">
             <Link href={`/profile/${user.id}`}>
@@ -71,7 +106,7 @@ const TweetCard = ({id, user, content, createdAt, likeCount, likedByMe} : Tweet)
                     <span className="text-gray-500">{dateTimeFormatter.format(createdAt)}</span>
                 </div>
                 <p className="whitespace-pre-wrap">{content}</p>
-                <HeartBtn likedByMe={likedByMe} likeCount={likeCount}/>
+                <HeartBtn onClick={handleToggleLike} isLoading={toggleLikes.isLoading}  likedByMe={likedByMe} likeCount={likeCount}/>
             </div>
         </li>
     )
