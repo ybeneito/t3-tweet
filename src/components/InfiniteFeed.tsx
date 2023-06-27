@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import {VscHeart, VscHeartFilled} from "react-icons/vsc"
 import { IconHoverEffect } from "./IconHoverEffect";
 import { api } from "y/utils/api";
+import { LoadingSpinner } from "./LoadingSpinner";
 
 type Tweet = {
     id: string;
@@ -87,6 +88,9 @@ const TweetCard = ({id, user, content, createdAt, likeCount, likedByMe} : Tweet)
             }
             // eslint-disable-next-line @typescript-eslint/no-unsafe-call
             trpcUtils.tweet.infiniteFeed.setInfiniteData({}, updateData)
+            trpcUtils.tweet.infiniteFeed.setInfiniteData({onlyFollowing: true}, updateData)
+            trpcUtils.tweet.infiniteProfileFeed.setInfiniteData({userId: user.id}, updateData)
+
         }
     })
     const handleToggleLike = () => {
@@ -94,7 +98,7 @@ const TweetCard = ({id, user, content, createdAt, likeCount, likedByMe} : Tweet)
     }
     return (
         <li className="flex gap-4 border-b px-4 py-4">
-            <Link href={`/profile/${user.id}`}>
+            <Link href={`/profiles/${user.id}`}>
                  <ProfileImg src={user.image}/> 
             </Link>
             <div className="flex flex-grow flex-col">
@@ -113,7 +117,7 @@ const TweetCard = ({id, user, content, createdAt, likeCount, likedByMe} : Tweet)
 }
 
 export function InfiniteFeed({tweets, isError, isLoading, hasMore=false, fetchNewTweets}: InfiniteFeedProps) {
-    if(isLoading) return <h1>Loading</h1>
+    if(isLoading) return <LoadingSpinner />
     if(isError) return <h1>erreur</h1>
     if(tweets == null || tweets.length === 0) {
         return <h2 className="my-4 text-center text-2xl text-gray-500">Pas de tweets</h2>
@@ -124,7 +128,7 @@ export function InfiniteFeed({tweets, isError, isLoading, hasMore=false, fetchNe
                 dataLength={tweets.length}
                 next={fetchNewTweets}
                 hasMore={hasMore}
-                loader={"chargement .... "}>
+                loader={<LoadingSpinner />}>
 
                     {tweets.map((tweet : Tweet) => {
                         return (<TweetCard key={tweet.id} {...tweet} />)

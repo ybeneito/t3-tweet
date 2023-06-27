@@ -25,7 +25,8 @@ import { prisma } from "y/server/db";
 
 type CreateContextOptions = {
   session: Session | null;
-};
+  revalidateSSG: ((urlPath: string, opts?: { unstable_onlyGenerated?: boolean | undefined } | undefined) => Promise<void>) | null
+}
 
 /**
  * This helper generates the "internals" for a tRPC context. If you need to use it, you can export
@@ -37,9 +38,10 @@ type CreateContextOptions = {
  *
  * @see https://create.t3.gg/en/usage/trpc#-serverapitrpcts
  */
-const createInnerTRPCContext = (opts: CreateContextOptions) => {
+export const createInnerTRPCContext = (opts: CreateContextOptions) => {
   return {
     session: opts.session,
+    revalidateSSG: opts.revalidateSSG,
     prisma,
   };
 };
@@ -58,6 +60,7 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
 
   return createInnerTRPCContext({
     session,
+    revalidateSSG: res.revalidate
   });
 };
 
