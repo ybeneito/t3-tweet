@@ -91,7 +91,7 @@ const ProfilePage: NextPage<InferGetStaticPropsType<typeof getStaticProps>> = ({
                     {profile.followersCount}{" "}
                     {getPlural(profile.followersCount, "Suivi", "Suivis")} -{" "}
                     {profile.followsCount}{" "}
-                    {getPlural(profile.followersCount, "Suiveur", "Suivers")} -{" "}
+                    {getPlural(profile.followersCount, "Suiveur", "Suivers")}
                 </div>
             </div>
             <FollowButton isFollowing={profile.isFollowing} userId={id} onClick={() => toggleFollow.mutate({userId : id})} isLoading={toggleFollow.isLoading}/>
